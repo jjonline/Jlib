@@ -1,9 +1,7 @@
-Jlib
+Jlib.js JJonline常用的一些Js方法简单封装库
 ====
 Jlib,JJonline javascript libaray
 
-/**
-+----------------------------------------------------------
 * 
 * @authors: Jea Yang (JJonline@JJonline.Cn)
 * @CopyRights: Any source code changes without permission prohibited
@@ -52,6 +50,3 @@ Jlib,JJonline javascript libaray
 * 将对象[object of json 、object of array]转换成字符串方法 => J.toString(object)
 * 将对象字符串[需符合对象字符串的格式要求]转换成对象方法 => J.toObject(objectString)
 * PS：目前Jlib.js已经将开源的JSON2.js合并，所有浏览器中可直接调用JSON.parse()、JSON.stringify()等JSON原生方法
-+----------------------------------------------------------
-*/
-
