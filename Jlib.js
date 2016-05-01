@@ -12,6 +12,7 @@
 * @Time:2015-5-16 fixed isUrl support more url string
 * @Time:2015-5-25 fixed isMail support domainName has _ && userName has .
 * @Time:2015-7-24 add html_encode()  &&  html_decode()
+* @Time:2016-5-01 add SetUrlQueryString(getName,getVal[,url])
 * @Description: Jlib.js === jjonline javascript library
 * @version 1.1.5 dev
 *
@@ -29,6 +30,7 @@
 * 检测传入的字符串是否是全部由字母构成 => J.isAlphabet(Alphabets)
 * 检测传入的字符串是否是合法的天朝身份证号码[严格效验] => J.isID(CardNumber) 或 J.isCardNumber(CardNumber)
 * 传入当前页面的url中的get变量名称获取当前url中的get变量 => J.GetUrlQueryString(getName)
+* 设置当前Url中的get变量，第三个待选参数可以传入自定义Url => J.SetUrlQueryString(getName,getVal[,url])
 * 获取当前窗口的宽高,返回对象 => J.windowSize()
 *
 *
@@ -357,6 +359,58 @@
         if (r != null) return unescape(r[2]);
         return null;
     };
+	
+	/*===设置当前Url中的get变量 注意url特殊字符实体编码问题===*/
+	J.SetUrlQueryString=function (name,value,url) {
+		var url     = url || window.location.href;
+		var str     = "";
+		var baseUrl = "";
+		if (url.indexOf('?') != -1) {
+			str     = url.substr(url.indexOf('?') + 1);
+			baseUrl = url.substr(0,url.indexOf('?'));//不带“？”的路径Url
+		}else{
+			return url + "?" + name + "=" + value;
+		}
+		var paraArr,hasPara = false;
+		if(str.indexOf('&') != -1) {
+			/*将现有多个key-value参数拆分成key<==>value形式，避免多余的&捣乱*/
+			paraArr = str.split('&');
+			//console.log(paraArr);
+			for(key in paraArr) {
+				if(paraArr[key] == "") {
+					paraArr.splice(key,1);//清理这个空元素
+					continue;
+				}
+				var keyValue = paraArr[key].split('=');
+				if(paraArr[key] == "") {
+					/**无getName变态形式**/
+					paraArr.splice(key,1);//清理这个变态元素
+					continue;
+				}
+				/*找到url中原先存在该get变量，修改其值*/
+				if(keyValue[0] == name) {
+					hasPara = true;
+					paraArr[key] = name + "=" + value;
+				}
+			}
+			if(hasPara) {
+				return baseUrl + "?" + paraArr.join("&");
+			}else {
+				return baseUrl + "?" + paraArr.join("&") + "&" + name + "=" + value;
+			}
+		}else {
+			/**Url中存在"?"但不存在"&" => 可能有一个get变量也可能仅有一个破"?"**/
+			if(str.indexOf('=') != -1) {
+				paraArr = str.split('=');
+				if(paraArr[0] == name || paraArr[0] == "") {
+					return baseUrl + "?" + name + "=" + value;
+				}
+				return baseUrl + "?" + paraArr[0] + "=" + paraArr[1] + "&" + name + "=" + value;
+			}else {
+				return baseUrl + "?" + name + "=" + value;
+			}
+		}
+	};
 
     /*===获取当前窗口的宽高 返回对象===*/
     J.windowSize=function() {
