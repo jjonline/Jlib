@@ -13,8 +13,9 @@
 * @Time:2015-5-25 fixed isMail support domainName has _ && userName has .
 * @Time:2015-7-24 add html_encode()  &&  html_decode()
 * @Time:2016-5-01 add SetUrlQueryString(getName,getVal[,url])
+* @Time:2016-12-19 add load_js、load_css Method
 * @Description: Jlib.js === jjonline javascript library
-* @version 1.1.5 dev
+* @version 1.1.6 dev
 *
 *@ Api
 * 产生随机整数方法  =>  J.rand([min],[max]); 
@@ -60,10 +61,16 @@
 *
 * 对HTMl字符串进行转义处理 => J.escapeHTML(htmlString)
 * 去除字符串中的回车符 \n\r之类的看不到的 J.trimEnter(string)
+*
+* 动态加载js并执行回调函数 => J.load_js('js_dir',callback);
+* js_dir为完的js路径，callback为js加载成功或加载失败后执行的回调函数名
+*
+* 动态加载css并执行回调函数 => J.load_css('css_dir',callback);
+* css_dir为完的css路径，callback为该css加载成功或加载失败后执行的回调函数名
 +----------------------------------------------------------
 */
 (function(window, undefined) {
-    var	_version = '1.1.5 beta',//Jlib版本号
+    var _version = '1.1.5 beta',//Jlib版本号
     J = {};//初始化J命名空间
 
     /*===未内置原生JSON对象的浏览器扩展JSON对象方法===*/
@@ -123,7 +130,7 @@
         var cx, escapable, gap, indent, meta, rep;
         typeof JSON.stringify != "function" && (escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g, meta = {
             "\b": "\\b",
-            "	": "\\t",
+            "   ": "\\t",
             "\n": "\\n",
             "\f": "\\f",
             "\r": "\\r",
@@ -359,58 +366,58 @@
         if (r != null) return unescape(r[2]);
         return null;
     };
-	
-	/*===设置当前Url中的get变量 注意url特殊字符实体编码问题===*/
-	J.SetUrlQueryString=function (name,value,url) {
-		var url     = url || window.location.href;
-		var str     = "";
-		var baseUrl = "";
-		if (url.indexOf('?') != -1) {
-			str     = url.substr(url.indexOf('?') + 1);
-			baseUrl = url.substr(0,url.indexOf('?'));//不带“？”的路径Url
-		}else{
-			return url + "?" + name + "=" + value;
-		}
-		var paraArr,hasPara = false;
-		if(str.indexOf('&') != -1) {
-			/*将现有多个key-value参数拆分成key<==>value形式，避免多余的&捣乱*/
-			paraArr = str.split('&');
-			//console.log(paraArr);
-			for(key in paraArr) {
-				if(paraArr[key] == "") {
-					paraArr.splice(key,1);//清理这个空元素
-					continue;
-				}
-				var keyValue = paraArr[key].split('=');
-				if(paraArr[key] == "") {
-					/**无getName变态形式**/
-					paraArr.splice(key,1);//清理这个变态元素
-					continue;
-				}
-				/*找到url中原先存在该get变量，修改其值*/
-				if(keyValue[0] == name) {
-					hasPara = true;
-					paraArr[key] = name + "=" + value;
-				}
-			}
-			if(hasPara) {
-				return baseUrl + "?" + paraArr.join("&");
-			}else {
-				return baseUrl + "?" + paraArr.join("&") + "&" + name + "=" + value;
-			}
-		}else {
-			/**Url中存在"?"但不存在"&" => 可能有一个get变量也可能仅有一个破"?"**/
-			if(str.indexOf('=') != -1) {
-				paraArr = str.split('=');
-				if(paraArr[0] == name || paraArr[0] == "") {
-					return baseUrl + "?" + name + "=" + value;
-				}
-				return baseUrl + "?" + paraArr[0] + "=" + paraArr[1] + "&" + name + "=" + value;
-			}else {
-				return baseUrl + "?" + name + "=" + value;
-			}
-		}
-	};
+    
+    /*===设置当前Url中的get变量 注意url特殊字符实体编码问题===*/
+    J.SetUrlQueryString=function (name,value,url) {
+        var url     = url || window.location.href;
+        var str     = "";
+        var baseUrl = "";
+        if (url.indexOf('?') != -1) {
+            str     = url.substr(url.indexOf('?') + 1);
+            baseUrl = url.substr(0,url.indexOf('?'));//不带“？”的路径Url
+        }else{
+            return url + "?" + name + "=" + value;
+        }
+        var paraArr,hasPara = false;
+        if(str.indexOf('&') != -1) {
+            /*将现有多个key-value参数拆分成key<==>value形式，避免多余的&捣乱*/
+            paraArr = str.split('&');
+            //console.log(paraArr);
+            for(key in paraArr) {
+                if(paraArr[key] == "") {
+                    paraArr.splice(key,1);//清理这个空元素
+                    continue;
+                }
+                var keyValue = paraArr[key].split('=');
+                if(paraArr[key] == "") {
+                    /**无getName变态形式**/
+                    paraArr.splice(key,1);//清理这个变态元素
+                    continue;
+                }
+                /*找到url中原先存在该get变量，修改其值*/
+                if(keyValue[0] == name) {
+                    hasPara = true;
+                    paraArr[key] = name + "=" + value;
+                }
+            }
+            if(hasPara) {
+                return baseUrl + "?" + paraArr.join("&");
+            }else {
+                return baseUrl + "?" + paraArr.join("&") + "&" + name + "=" + value;
+            }
+        }else {
+            /**Url中存在"?"但不存在"&" => 可能有一个get变量也可能仅有一个破"?"**/
+            if(str.indexOf('=') != -1) {
+                paraArr = str.split('=');
+                if(paraArr[0] == name || paraArr[0] == "") {
+                    return baseUrl + "?" + name + "=" + value;
+                }
+                return baseUrl + "?" + paraArr[0] + "=" + paraArr[1] + "&" + name + "=" + value;
+            }else {
+                return baseUrl + "?" + name + "=" + value;
+            }
+        }
+    };
 
     /*===获取当前窗口的宽高 返回对象===*/
     J.windowSize=function() {
@@ -608,30 +615,95 @@
             timeObj.getSeconds()
         ].join(':');
     };
-	J.html_encode=function (str) {
-		var s = "";   
-		if (str.length == 0) {return "";}   
-		s = str.replace(/&/g, "&gt;");   
-		s = s.replace(/</g, "&lt;");   
-		s = s.replace(/>/g, "&gt;");   
-		s = s.replace(/ /g, "&nbsp;");   
-		s = s.replace(/\'/g, "&#39;");   
-		s = s.replace(/\"/g, "&quot;");   
-		s = s.replace(/\n/g, "<br>");   
-		return s;
-	};
-	J.html_decode=function (str) {
-		var s = "";   
-		if (str.length == 0) {return ""};   
-		s = str.replace(/&gt;/g, "&");   
-		s = s.replace(/&lt;/g, "<");   
-		s = s.replace(/&gt;/g, ">");   
-		s = s.replace(/&nbsp;/g, " ");   
-		s = s.replace(/&#39;/g, "\'");   
-		s = s.replace(/&quot;/g, "\"");   
-		s = s.replace(/<br>/g, "\n");   
-		return s;
-	};
+    J.html_encode=function (str) {
+        var s = "";   
+        if (str.length == 0) {return "";}
+        s = str.replace(/&/g, "&gt;");
+        s = s.replace(/</g, "&lt;");
+        s = s.replace(/>/g, "&gt;");
+        s = s.replace(/ /g, "&nbsp;");
+        s = s.replace(/\'/g, "&#39;");
+        s = s.replace(/\"/g, "&quot;");
+        s = s.replace(/\n/g, "<br>");
+        return s;
+    };
+    J.html_decode=function (str) {
+        var s = "";   
+        if (str.length == 0) {return ""};
+        s = str.replace(/&gt;/g, "&");
+        s = s.replace(/&lt;/g, "<");
+        s = s.replace(/&gt;/g, ">");
+        s = s.replace(/&nbsp;/g, " ");
+        s = s.replace(/&#39;/g, "\'");
+        s = s.replace(/&quot;/g, "\"");
+        s = s.replace(/<br>/g, "\n");
+        return s;
+    };
+    J.isOpera = typeof opera !== 'undefined' && opera.toString() === '[object Opera]';
+    //动态加载js并执行回调(加载成功后加载失败均执行)
+    J.load_js=function (src,callback) {
+        var scripts = document.getElementsByTagName('script');
+        for(i in scripts)
+        {
+            if(scripts[i].src == src)
+            {
+                if(typeof callback != 'function')
+                {  
+                    return false;
+                }
+                return callback();
+            }
+        }
+        var head     = document.getElementsByTagName('head').item(0);
+        var node     = document.createElement('script');
+        node.type    = 'text/javascript';
+        node.src     = src;
+        node.charset = 'utf-8';
+        node.async   = true;
+        //addEventListener
+        if(typeof callback == 'function')
+        {
+            if (node.attachEvent && !(node.attachEvent.toString && node.attachEvent.toString().indexOf('[native code') < 0) && !this.isOpera)
+            {
+                node.attachEvent('onreadystatechange', callback);
+            }else{
+                node.addEventListener('load', callback, false);
+                node.addEventListener('error', callback, false);
+            }
+        }
+        head.appendChild(node);
+    };
+    //动态加载css
+    J.load_css=function (href,callback) {
+        var links = document.getElementsByTagName('link');
+        for(i in links)
+        {
+            if(links[i].href == href)
+            {
+                if(typeof callback != 'function')
+                {  
+                    return false;
+                }
+                return callback();
+            }
+        }
+        var head  = document.getElementsByTagName('head').item(0);
+        var link  = document.createElement('link');
+        link.type = 'text/css';
+        link.rel  = 'stylesheet';
+        link.href = href;
+        if(typeof callback == 'function')
+        {
+            if (link.attachEvent && !(link.attachEvent.toString && link.attachEvent.toString().indexOf('[native code') < 0) && !this.isOpera)
+            {
+                link.attachEvent('onreadystatechange', callback);
+            }else{
+                link.addEventListener('load', callback, false);
+                link.addEventListener('error', callback, false);
+            }
+        }
+        head.appendChild(link);
+    };
     //将J命名空间传递到全局对象
     window.J = window.JJ = J;
 })(window);
